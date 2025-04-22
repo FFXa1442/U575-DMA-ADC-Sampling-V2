@@ -57,6 +57,7 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void SPI1_IRQHandler(void);
 void USART1_IRQHandler(void);
+void GPDMA1_Channel9_IRQHandler(void);
 void GPDMA1_Channel10_IRQHandler(void);
 void GPDMA1_Channel11_IRQHandler(void);
 /* USER CODE BEGIN EFP */

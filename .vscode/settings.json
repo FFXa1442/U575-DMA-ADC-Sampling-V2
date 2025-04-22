@@ -1,6 +1,8 @@
 {
     "files.associations": {
+        "*.ejs": "html",
         "stm32u5xx_hal.h": "c",
-        "signal.h": "c"
+        "signal.h": "c",
+        "spi_adc.h": "c"
     }
 }

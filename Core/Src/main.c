@@ -15,6 +15,22 @@
   *
   ******************************************************************************
   */
+
+/**
+ * SPI GPIO
+ *    SPI1 MOSI : PA7
+ *    SPI1 MISO : PA6
+ *    SPI1 SCK  : PA5
+ *    SPI1 CS   : PA4 <- for ESP32 or Raspberry Pi 4B / 5
+ * 
+ * ADC GPIO
+ *    ADC1 VIN+ : PA2
+ *    ADC1 VIN- : PA3
+ * 
+ * 
+ * 
+ */
+
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -23,6 +39,7 @@
 /* USER CODE BEGIN Includes */
 #include "serial.h"
 #include "signal.h"
+#include "spi_adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,11 +65,13 @@ DMA_HandleTypeDef handle_GPDMA1_Channel11;
 
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef handle_GPDMA1_Channel10;
+DMA_HandleTypeDef handle_GPDMA1_Channel9;
 
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t *spi1_adc1_rx_buffer = NULL;
+volatile uint8_t spi1_adc1_done = 0x00; // 0x00: not done, 0x01: done
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,7 +88,7 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void Start_ADC1_Sampling(void);
 /* USER CODE END 0 */
 
 /**
@@ -108,7 +127,10 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  Serial_Init(&huart1);
+
   AnaRP_Init(&hadc1, 5000, ANA_RP_HALF_WORD);
+  SPI_ADC_Init(&hspi1, &hadc1, &spi1_adc1_rx_buffer, 0xAF);
 
   /* USER CODE END 2 */
 
@@ -119,6 +141,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+
+    Start_ADC1_Sampling();
+
+    while (!spi1_adc1_done);
+
+    HAL_Delay(10);
+    
   }
   /* USER CODE END 3 */
 }
@@ -254,6 +284,8 @@ static void MX_GPDMA1_Init(void)
   __HAL_RCC_GPDMA1_CLK_ENABLE();
 
   /* GPDMA1 interrupt Init */
+    HAL_NVIC_SetPriority(GPDMA1_Channel9_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(GPDMA1_Channel9_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel10_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(GPDMA1_Channel10_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel11_IRQn, 0, 0);
@@ -437,12 +469,39 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void Start_ADC1_Sampling(void)
+{
+  spi1_adc1_done = 0x00; // Reset done flag
+  HAL_ADC_Start(&hadc1);
+}
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   if (hadc->Instance == ADC1)
   {
-    
-    AnaRP_ADC_ConvCpltCallback(hadc, , );
+    uint8_t* tx_buffer = NULL;
+    uint32_t size = 0;
+    if (SPI_ADC_GetBuffer(&hspi1, &hadc1, &tx_buffer, &size) == SPI_ADC_OK)
+    {
+      HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+      HAL_SPI_TransmitReceive_DMA(&hspi1, tx_buffer, spi1_adc1_rx_buffer, size);
+    }
+  }
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+  if (hspi->Instance == SPI1)
+  {
+    if (SPI_ADC_ValidateBuffer(&hspi1, &hadc1, spi1_adc1_rx_buffer) == SPI_ADC_OK)
+    {
+      HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+      spi1_adc1_done = 0x01; // Set done flag
+    }
+    else
+    {
+      // printf("SPI ADC Error\r\n");
+    }
   }
 }
 

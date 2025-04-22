@@ -36,6 +36,10 @@ typedef struct {
 AnaRP_List_t __ADC_List = {0};
 uint8_t __ADC_List_Inited = 0;
 
+/**
+ * @brief  Initialize the ADC data handle list.
+ * @retval 1 if initialized, 0 if already initialized.
+ */
 uint8_t __AnaRP_List_Init(void)
 {
     if (__ADC_List_Inited == 1) {
@@ -49,6 +53,10 @@ uint8_t __AnaRP_List_Init(void)
     return 1;
 }
 
+/**
+ * @brief  Deinitialize the ADC data handle list and free all nodes.
+ * @retval None
+ */
 void __AnaRP_List_DeInit(void)
 {
     if (__ADC_List_Inited == 0) {
@@ -69,6 +77,11 @@ void __AnaRP_List_DeInit(void)
     __ADC_List_Inited = 0;
 }
 
+/**
+ * @brief  Add a data handle to the ADC list.
+ * @param  data_handle: Pointer to the data handle to add.
+ * @retval 1 if successful, 0 otherwise.
+ */
 uint8_t __AnaRP_List_Add(AnaRP_Data_Handle_t* data_handle)
 {
     if (__ADC_List_Inited == 0) {
@@ -94,6 +107,11 @@ uint8_t __AnaRP_List_Add(AnaRP_Data_Handle_t* data_handle)
     return 1;
 }
 
+/**
+ * @brief  Remove a data handle from the ADC list.
+ * @param  data_handle: Pointer to the data handle to remove.
+ * @retval 1 if successful, 0 otherwise.
+ */
 uint8_t __AnaRP_List_Remove(AnaRP_Data_Handle_t* data_handle)
 {
     if (__ADC_List_Inited == 0) {
@@ -126,6 +144,12 @@ uint8_t __AnaRP_List_Remove(AnaRP_Data_Handle_t* data_handle)
     return 0;
 }
 
+/**
+ * @brief  Find a data handle in the ADC list by ADC handle.
+ * @param  hadc: ADC handle to search for.
+ * @param  return_handle: Pointer to store the found data handle.
+ * @retval 1 if found, 0 otherwise.
+ */
 uint8_t __AnaRP_List_Find(ADC_HandleTypeDef *hadc, AnaRP_Data_Handle_t** return_handle)
 {
     if (__ADC_List_Inited == 0)
@@ -148,6 +172,13 @@ uint8_t __AnaRP_List_Find(ADC_HandleTypeDef *hadc, AnaRP_Data_Handle_t** return_
     return 0;
 }
 
+/**
+ * @brief  Initialize an ADC data handle and allocate buffer.
+ * @param  hadc: ADC handle.
+ * @param  dma_size: Size of the DMA buffer.
+ * @param  data_type: Data type (byte, half-word, word).
+ * @retval AnaRP_Result status.
+ */
 AnaRP_Result AnaRP_Init(ADC_HandleTypeDef *hadc, const uint16_t dma_size, const AnaRP_DataType data_type)
 {
 
@@ -211,6 +242,11 @@ AnaRP_Result AnaRP_Init(ADC_HandleTypeDef *hadc, const uint16_t dma_size, const 
     return ANA_RP_OK;
 }
 
+/**
+ * @brief  Deinitialize an ADC data handle and free resources.
+ * @param  hadc: ADC handle.
+ * @retval AnaRP_Result status.
+ */
 AnaRP_Result AnaRP_DeInit(ADC_HandleTypeDef *hadc)
 {
     if (hadc == NULL)
@@ -240,6 +276,15 @@ AnaRP_Result AnaRP_DeInit(ADC_HandleTypeDef *hadc)
     return ANA_RP_OK;
 }
 
+/**
+ * @brief  Get ADC data buffer and related information.
+ * @param  hadc: ADC handle.
+ * @param  buffer: Destination buffer to copy data (can be NULL).
+ * @param  size: Pointer to store buffer size (can be NULL).
+ * @param  data_size: Pointer to store number of data elements (can be NULL).
+ * @param  type_size: Pointer to store data type size (can be NULL).
+ * @retval AnaRP_Result status.
+ */
 AnaRP_Result AnaRP_GetData(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *size, uint32_t *data_size, uint8_t *type_size)
 {
     if (hadc == NULL)
@@ -276,6 +321,11 @@ AnaRP_Result AnaRP_GetData(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *s
     return ANA_RP_OK;
 }
 
+/**
+ * @brief  Start ADC conversion using DMA.
+ * @param  hadc: ADC handle.
+ * @retval AnaRP_Result status.
+ */
 AnaRP_Result AnaRP_Start_DMA(ADC_HandleTypeDef *hadc)
 {
     if (hadc == NULL)
@@ -289,6 +339,8 @@ AnaRP_Result AnaRP_Start_DMA(ADC_HandleTypeDef *hadc)
         return ANA_RP_ERROR;
     }
 
+    HAL_ADC_Stop_DMA(hadc);
+
     if (HAL_ADC_Start_DMA(hadc, (uint32_t*)data_handle->adc_buffer, data_handle->adc_size) != HAL_OK)
     {
         return ANA_RP_ERROR;
@@ -297,7 +349,13 @@ AnaRP_Result AnaRP_Start_DMA(ADC_HandleTypeDef *hadc)
     return ANA_RP_OK;
 }
 
-
+/**
+ * @brief  ADC conversion complete callback, stop DMA and copy data.
+ * @param  hadc: ADC handle.
+ * @param  dst: Destination buffer to copy data (can be NULL).
+ * @param  size: Pointer to store number of data elements (can be NULL).
+ * @retval AnaRP_Result status.
+ */
 AnaRP_Result AnaRP_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc, uint8_t *dst, uint16_t *size)
 {
     if (hadc == NULL)

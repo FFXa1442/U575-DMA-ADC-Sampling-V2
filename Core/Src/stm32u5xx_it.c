@@ -59,6 +59,7 @@ extern DMA_NodeTypeDef Node_GPDMA1_Channel11;
 extern DMA_QListTypeDef List_GPDMA1_Channel11;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel11;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel10;
+extern DMA_HandleTypeDef handle_GPDMA1_Channel9;
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
@@ -229,6 +230,20 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles GPDMA1 Channel 9 global interrupt.
+  */
+void GPDMA1_Channel9_IRQHandler(void)
+{
+  /* USER CODE BEGIN GPDMA1_Channel9_IRQn 0 */
+
+  /* USER CODE END GPDMA1_Channel9_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel9);
+  /* USER CODE BEGIN GPDMA1_Channel9_IRQn 1 */
+
+  /* USER CODE END GPDMA1_Channel9_IRQn 1 */
 }
 
 /**
