@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "signal.h"
+#include "sampling.h"
 
 #define FRAME_HEADER_1   0xCA    // Frame header first byte
 #define FRAME_HEADER_2   0x78    // Frame header second byte
@@ -248,7 +248,7 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, ui
 
     uint8_t type_size = 0;
     uint32_t adc_buffer_size = 0;
-    if (AnaRP_GetData(hadc, NULL, NULL, &adc_buffer_size, &type_size) != ANA_RP_OK)
+    if (ADC_GetData(hadc, NULL, NULL, &adc_buffer_size, &type_size) != ADC_OK)
     {
         return SPI_ADC_ERROR;
     }
@@ -345,7 +345,7 @@ SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *had
     uint16_t adc_size = 0;
     uint32_t adc_buffer_size = 0;
     uint8_t type_size = 0;
-    if (AnaRP_GetData(hadc, NULL, &adc_size, &adc_buffer_size, &type_size) != ANA_RP_OK)
+    if (ADC_GetData(hadc, NULL, &adc_size, &adc_buffer_size, &type_size) != ADC_OK)
     {
         return SPI_ADC_ERROR;
     }
@@ -382,7 +382,7 @@ SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *had
         tar_buf += type_size;
 
         // Set ADC Data
-        if (AnaRP_GetData(hadc, tar_buf, NULL, NULL, NULL) != ANA_RP_OK)
+        if (ADC_GetData(hadc, tar_buf, NULL, NULL, NULL) != ADC_OK)
         {
             free(data_handle->spi_tx_buffer);
             data_handle->spi_tx_buffer = NULL;

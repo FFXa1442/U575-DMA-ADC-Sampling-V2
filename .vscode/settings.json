@@ -1,8 +1,10 @@
 {
-    "files.associations": {
-        "*.ejs": "html",
-        "stm32u5xx_hal.h": "c",
-        "signal.h": "c",
-        "spi_adc.h": "c"
-    }
+  "files.associations": {
+    "*.ejs": "html",
+    "stm32u5xx_hal.h": "c",
+    "signal.h": "c",
+    "spi_adc.h": "c",
+    "time.h": "c"
+  },
+  "C_Cpp_Runner.msvcBatchPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvarsall.bat"
 }

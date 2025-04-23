@@ -12,7 +12,6 @@
 extern "C" {
 #endif
 
-#include "stdio.h"
 #include "stm32u5xx_hal.h"
 
 extern void Serial_Init(UART_HandleTypeDef * huart);

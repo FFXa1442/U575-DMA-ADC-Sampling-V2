@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "c:/Users/XQuan/STM32CubeIDE/workspace_1.18.0/U575-DMA-ADC-Sampling-V2/Libs/SPI/Src",
+      "program": "c:/Users/XQuan/STM32CubeIDE/workspace_1.18.0/U575-DMA-ADC-Sampling-V2/Libs/SPI/Src/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}

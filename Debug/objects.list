@@ -27,6 +27,6 @@
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_spi_ex.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_uart.o"
 "./Drivers/STM32U5xx_HAL_Driver/Src/stm32u5xx_hal_uart_ex.o"
-"./Libs/ADC/Src/signal.o"
+"./Libs/ADC/Src/sampling.o"
 "./Libs/SPI/Src/spi_adc.o"
 "./Libs/UART/Src/serial.o"

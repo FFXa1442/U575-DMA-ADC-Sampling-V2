@@ -5,7 +5,7 @@
  *      Author:
  */
 
-#include "signal.h"
+#include "sampling.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -19,28 +19,28 @@ typedef struct {
 
     ADC_HandleTypeDef* handle;
 
-} AnaRP_Data_Handle_t;
+} ADC_Data_Handle_t;
 
-typedef struct __AnaPR_Node_t AnaPR_Node_t;
+typedef struct __ADC_Node_t ADC_Node_t;
 
-struct __AnaPR_Node_t {
-    AnaRP_Data_Handle_t* data_handle;
-    AnaPR_Node_t* next;
+struct __ADC_Node_t {
+    ADC_Data_Handle_t* data_handle;
+    ADC_Node_t* next;
 };
 
 typedef struct {
-    AnaPR_Node_t* head;
-    AnaPR_Node_t* tail;
-} AnaRP_List_t;
+    ADC_Node_t* head;
+    ADC_Node_t* tail;
+} ADC_List_t;
 
-AnaRP_List_t __ADC_List = {0};
+ADC_List_t __ADC_List = {0};
 uint8_t __ADC_List_Inited = 0;
 
 /**
  * @brief  Initialize the ADC data handle list.
  * @retval 1 if initialized, 0 if already initialized.
  */
-uint8_t __AnaRP_List_Init(void)
+uint8_t __ADC_List_Init(void)
 {
     if (__ADC_List_Inited == 1) {
         return 0;
@@ -57,14 +57,14 @@ uint8_t __AnaRP_List_Init(void)
  * @brief  Deinitialize the ADC data handle list and free all nodes.
  * @retval None
  */
-void __AnaRP_List_DeInit(void)
+void __ADC_List_DeInit(void)
 {
     if (__ADC_List_Inited == 0) {
         return;
     }
 
-    AnaPR_Node_t* current = __ADC_List.head;
-    AnaPR_Node_t* next_node = NULL;
+    ADC_Node_t* current = __ADC_List.head;
+    ADC_Node_t* next_node = NULL;
 
     while (current != NULL) {
         next_node = current->next;
@@ -82,13 +82,13 @@ void __AnaRP_List_DeInit(void)
  * @param  data_handle: Pointer to the data handle to add.
  * @retval 1 if successful, 0 otherwise.
  */
-uint8_t __AnaRP_List_Add(AnaRP_Data_Handle_t* data_handle)
+uint8_t __ADC_List_Add(ADC_Data_Handle_t* data_handle)
 {
     if (__ADC_List_Inited == 0) {
         return 0;
     }
 
-    AnaPR_Node_t* new_node = (AnaPR_Node_t*)malloc(sizeof(AnaPR_Node_t));
+    ADC_Node_t* new_node = (ADC_Node_t*)malloc(sizeof(ADC_Node_t));
     if (new_node == NULL) {
         return 0;
     }
@@ -112,14 +112,14 @@ uint8_t __AnaRP_List_Add(AnaRP_Data_Handle_t* data_handle)
  * @param  data_handle: Pointer to the data handle to remove.
  * @retval 1 if successful, 0 otherwise.
  */
-uint8_t __AnaRP_List_Remove(AnaRP_Data_Handle_t* data_handle)
+uint8_t __ADC_List_Remove(ADC_Data_Handle_t* data_handle)
 {
     if (__ADC_List_Inited == 0) {
         return 0;
     }
 
-    AnaPR_Node_t* current = __ADC_List.head;
-    AnaPR_Node_t* previous = NULL;
+    ADC_Node_t* current = __ADC_List.head;
+    ADC_Node_t* previous = NULL;
 
     while (current != NULL) {
         if (current->data_handle == data_handle) {
@@ -150,14 +150,14 @@ uint8_t __AnaRP_List_Remove(AnaRP_Data_Handle_t* data_handle)
  * @param  return_handle: Pointer to store the found data handle.
  * @retval 1 if found, 0 otherwise.
  */
-uint8_t __AnaRP_List_Find(ADC_HandleTypeDef *hadc, AnaRP_Data_Handle_t** return_handle)
+uint8_t __ADC_List_Find(ADC_HandleTypeDef *hadc, ADC_Data_Handle_t** return_handle)
 {
     if (__ADC_List_Inited == 0)
     {
         return 0;
     }
 
-    AnaPR_Node_t* current = __ADC_List.head;
+    ADC_Node_t* current = __ADC_List.head;
 
     while (current != NULL)
     {
@@ -177,46 +177,46 @@ uint8_t __AnaRP_List_Find(ADC_HandleTypeDef *hadc, AnaRP_Data_Handle_t** return_
  * @param  hadc: ADC handle.
  * @param  dma_size: Size of the DMA buffer.
  * @param  data_type: Data type (byte, half-word, word).
- * @retval AnaRP_Result status.
+ * @retval ADC_Result status.
  */
-AnaRP_Result AnaRP_Init(ADC_HandleTypeDef *hadc, const uint16_t dma_size, const AnaRP_DataType data_type)
+ADC_Result ADC_Init(ADC_HandleTypeDef *hadc, const uint16_t dma_size, const ADC_DataType data_type)
 {
 
     if (hadc == NULL)
     {
-        return ANA_RP_ARGUMENT_OUT_OF_RANGE;
+        return ADC_ARGUMENT_OUT_OF_RANGE;
     }
 
     if (dma_size == 0)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
-    if (__AnaRP_List_Init() == 0)
+    if (__ADC_List_Init() == 0)
     {
-        return ANA_RP_OUT_OF_MEMORY;
+        return ADC_OUT_OF_MEMORY;
     }
 
-    AnaRP_Data_Handle_t* data_handle = (AnaRP_Data_Handle_t*)malloc(sizeof(AnaRP_Data_Handle_t));
+    ADC_Data_Handle_t* data_handle = (ADC_Data_Handle_t*)malloc(sizeof(ADC_Data_Handle_t));
     if (data_handle == NULL)
     {
-        return ANA_RP_OUT_OF_MEMORY;
+        return ADC_OUT_OF_MEMORY;
     }
 
     uint16_t type_size = 0;
     switch (data_type)
     {
-        case ANA_RP_BYTE:
+        case ADC_BYTE:
             type_size = sizeof(uint8_t);
             break;
-        case ANA_RP_HALF_WORD:
+        case ADC_HALF_WORD:
             type_size = sizeof(uint16_t);
             break;
-        case ANA_RP_WORD:
+        case ADC_WORD:
             type_size = sizeof(uint32_t);
             break;
         default:
-            return ANA_RP_ARGUMENT_OUT_OF_RANGE;
+            return ADC_ARGUMENT_OUT_OF_RANGE;
     }
 
     data_handle->adc_size = dma_size;
@@ -227,37 +227,37 @@ AnaRP_Result AnaRP_Init(ADC_HandleTypeDef *hadc, const uint16_t dma_size, const 
     if (data_handle->adc_buffer == NULL)
     {
         free(data_handle);
-        return ANA_RP_OUT_OF_MEMORY;
+        return ADC_OUT_OF_MEMORY;
     }
 
     data_handle->handle = hadc;
 
-    if (__AnaRP_List_Add(data_handle) == 0)
+    if (__ADC_List_Add(data_handle) == 0)
     {
         free(data_handle->adc_buffer);
         free(data_handle);
-        return ANA_RP_OUT_OF_MEMORY;
+        return ADC_OUT_OF_MEMORY;
     }
 
-    return ANA_RP_OK;
+    return ADC_OK;
 }
 
 /**
  * @brief  Deinitialize an ADC data handle and free resources.
  * @param  hadc: ADC handle.
- * @retval AnaRP_Result status.
+ * @retval ADC_Result status.
  */
-AnaRP_Result AnaRP_DeInit(ADC_HandleTypeDef *hadc)
+ADC_Result ADC_DeInit(ADC_HandleTypeDef *hadc)
 {
     if (hadc == NULL)
     {
-        return ANA_RP_ARGUMENT_OUT_OF_RANGE;
+        return ADC_ARGUMENT_OUT_OF_RANGE;
     }
 
-    AnaRP_Data_Handle_t* data_handle = NULL;
-    if (__AnaRP_List_Find(hadc, &data_handle) == 0)
+    ADC_Data_Handle_t* data_handle = NULL;
+    if (__ADC_List_Find(hadc, &data_handle) == 0)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
     if (data_handle->adc_buffer != NULL)
@@ -266,14 +266,14 @@ AnaRP_Result AnaRP_DeInit(ADC_HandleTypeDef *hadc)
         data_handle->adc_buffer = NULL;
     }
 
-    if (__AnaRP_List_Remove(data_handle) == 0)
+    if (__ADC_List_Remove(data_handle) == 0)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
     free(data_handle);
 
-    return ANA_RP_OK;
+    return ADC_OK;
 }
 
 /**
@@ -283,19 +283,19 @@ AnaRP_Result AnaRP_DeInit(ADC_HandleTypeDef *hadc)
  * @param  size: Pointer to store buffer size (can be NULL).
  * @param  data_size: Pointer to store number of data elements (can be NULL).
  * @param  type_size: Pointer to store data type size (can be NULL).
- * @retval AnaRP_Result status.
+ * @retval ADC_Result status.
  */
-AnaRP_Result AnaRP_GetData(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *size, uint32_t *data_size, uint8_t *type_size)
+ADC_Result ADC_GetData(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *size, uint32_t *data_size, uint8_t *type_size)
 {
     if (hadc == NULL)
     {
-        return ANA_RP_ARGUMENT_OUT_OF_RANGE;
+        return ADC_ARGUMENT_OUT_OF_RANGE;
     }
 
-    AnaRP_Data_Handle_t* data_handle = NULL;
-    if (__AnaRP_List_Find(hadc, &data_handle) == 0)
+    ADC_Data_Handle_t* data_handle = NULL;
+    if (__ADC_List_Find(hadc, &data_handle) == 0)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
     if (buffer != NULL)
@@ -318,35 +318,35 @@ AnaRP_Result AnaRP_GetData(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *s
         *type_size = data_handle->type_size;
     }
 
-    return ANA_RP_OK;
+    return ADC_OK;
 }
 
 /**
  * @brief  Start ADC conversion using DMA.
  * @param  hadc: ADC handle.
- * @retval AnaRP_Result status.
+ * @retval ADC_Result status.
  */
-AnaRP_Result AnaRP_Start_DMA(ADC_HandleTypeDef *hadc)
+ADC_Result ADC_Start_DMA(ADC_HandleTypeDef *hadc)
 {
     if (hadc == NULL)
     {
-        return ANA_RP_ARGUMENT_OUT_OF_RANGE;
+        return ADC_ARGUMENT_OUT_OF_RANGE;
     }
 
-    AnaRP_Data_Handle_t* data_handle = NULL;
-    if (__AnaRP_List_Find(hadc, &data_handle) == 0)
+    ADC_Data_Handle_t* data_handle = NULL;
+    if (__ADC_List_Find(hadc, &data_handle) == 0)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
     HAL_ADC_Stop_DMA(hadc);
 
     if (HAL_ADC_Start_DMA(hadc, (uint32_t*)data_handle->adc_buffer, data_handle->adc_size) != HAL_OK)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
-    return ANA_RP_OK;
+    return ADC_OK;
 }
 
 /**
@@ -354,19 +354,19 @@ AnaRP_Result AnaRP_Start_DMA(ADC_HandleTypeDef *hadc)
  * @param  hadc: ADC handle.
  * @param  dst: Destination buffer to copy data (can be NULL).
  * @param  size: Pointer to store number of data elements (can be NULL).
- * @retval AnaRP_Result status.
+ * @retval ADC_Result status.
  */
-AnaRP_Result AnaRP_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc, uint8_t *dst, uint16_t *size)
+ADC_Result ADC_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc, uint8_t *dst, uint16_t *size)
 {
     if (hadc == NULL)
     {
-        return ANA_RP_ARGUMENT_OUT_OF_RANGE;
+        return ADC_ARGUMENT_OUT_OF_RANGE;
     }
 
-    AnaRP_Data_Handle_t* data_handle = NULL;
-    if (__AnaRP_List_Find(hadc, &data_handle) == 0)
+    ADC_Data_Handle_t* data_handle = NULL;
+    if (__ADC_List_Find(hadc, &data_handle) == 0)
     {
-        return ANA_RP_ERROR;
+        return ADC_ERROR;
     }
 
     HAL_ADC_Stop_DMA(hadc);
@@ -381,5 +381,5 @@ AnaRP_Result AnaRP_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc, uint8_t *dst, u
         *size = data_handle->adc_size;
     }
 
-    return ANA_RP_OK;
+    return ADC_OK;
 }

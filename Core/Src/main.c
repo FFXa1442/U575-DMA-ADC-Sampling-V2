@@ -38,7 +38,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "serial.h"
-#include "signal.h"
+#include "sampling.h"
 #include "spi_adc.h"
 /* USER CODE END Includes */
 
@@ -129,7 +129,7 @@ int main(void)
 
   Serial_Init(&huart1);
 
-  AnaRP_Init(&hadc1, 5000, ANA_RP_HALF_WORD);
+  ADC_Init(&hadc1, 5000, ADC_HALF_WORD);
   SPI_ADC_Init(&hspi1, &hadc1, &spi1_adc1_rx_buffer, 0xAF);
 
   /* USER CODE END 2 */

@@ -5,13 +5,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Libs/ADC/Src/signal.c 
+../Libs/ADC/Src/sampling.c 
 
 OBJS += \
-./Libs/ADC/Src/signal.o 
+./Libs/ADC/Src/sampling.o 
 
 C_DEPS += \
-./Libs/ADC/Src/signal.d 
+./Libs/ADC/Src/sampling.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -21,7 +21,7 @@ Libs/ADC/Src/%.o Libs/ADC/Src/%.su Libs/ADC/Src/%.cyclo: ../Libs/ADC/Src/%.c Lib
 clean: clean-Libs-2f-ADC-2f-Src
 
 clean-Libs-2f-ADC-2f-Src:
-	-$(RM) ./Libs/ADC/Src/signal.cyclo ./Libs/ADC/Src/signal.d ./Libs/ADC/Src/signal.o ./Libs/ADC/Src/signal.su
+	-$(RM) ./Libs/ADC/Src/sampling.cyclo ./Libs/ADC/Src/sampling.d ./Libs/ADC/Src/sampling.o ./Libs/ADC/Src/sampling.su
 
 .PHONY: clean-Libs-2f-ADC-2f-Src
 
