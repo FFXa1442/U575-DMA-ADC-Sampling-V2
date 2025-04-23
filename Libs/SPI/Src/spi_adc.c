@@ -12,21 +12,25 @@
 
 #include "sampling.h"
 
+
 #define FRAME_HEADER_1   0xCA    // Frame header first byte
 #define FRAME_HEADER_2   0x78    // Frame header second byte
 // #define FRAME_FOOTER_1   0x5A    // Frame footer first byte
 // #define FRAME_FOOTER_2   0xA5    // Frame footer second byte
 
+
 typedef struct {
     uint8_t* spi_tx_buffer; // Allocate After
     uint8_t* spi_rx_buffer; // Allocate After
-    uint32_t spi_size; // Header + Size + ADC Data + ACK (1 byte)
-    uint8_t ack; // ACK
+    uint32_t spi_size; // Header + Size + ADC Data
+
 
     SPI_HandleTypeDef* handle;
     size_t adc_ref;
 
 } SPI_ADC_Data_Handle_t;
+
+#if 1 // List Implementation
 
 typedef struct __SPI_ADC_Node_t SPI_ADC_Node_t;
 typedef struct __SPI_ADC_Node_t
@@ -64,6 +68,7 @@ uint8_t __SPI_ADC_List_Init(void)
 
 /**
  * @brief Deinitialize the SPI ADC list and free all allocated memory.
+ *        This function releases all memory used by the list and its data handles.
  */
 void __SPI_ADC_List_DeInit(void)
 {
@@ -196,7 +201,7 @@ uint8_t __SPI_ADC_List_Remove(SPI_ADC_Data_Handle_t* data_handle)
 /**
  * @brief Find a SPI_ADC_Data_Handle_t in the list by SPI handle and ADC reference.
  * @param hspi: SPI handle.
- * @param ref: ADC reference.
+ * @param ref: ADC reference (usually the ADC handle cast to size_t).
  * @param return_handle: Pointer to store the found data handle.
  * @retval 1 if found, 0 otherwise.
  */
@@ -226,17 +231,18 @@ uint8_t __SPI_ADC_List_Find(SPI_HandleTypeDef *hspi, size_t ref, SPI_ADC_Data_Ha
     return 0;
 }
 
+#endif
+
 /**
  * @brief Initialize SPI ADC data handle and add it to the list.
+ *        Allocates and initializes a data handle for the given SPI and ADC handles.
  * @param hspi: SPI handle.
  * @param hadc: ADC handle.
- * @param ptr_rx_buffer: Pointer to store allocated RX buffer.
- * @param ack_code: ACK code to use.
  * @retval SPI_ADC_Result: Result of the operation.
  */
-SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_rx_buffer, const uint8_t ack_code)
+SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 {
-    if (hspi == NULL || hadc == NULL || ptr_rx_buffer == NULL)
+    if (hspi == NULL || hadc == NULL)
     {
         return SPI_ADC_ARGUMENT_OUT_OF_RANGE;
     }
@@ -248,7 +254,7 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, ui
 
     uint8_t type_size = 0;
     uint32_t adc_buffer_size = 0;
-    if (ADC_GetData(hadc, NULL, NULL, &adc_buffer_size, &type_size) != ADC_OK)
+    if (ADC_Get(hadc, NULL, NULL, &adc_buffer_size, &type_size) != ADC_OK)
     {
         return SPI_ADC_ERROR;
     }
@@ -259,21 +265,9 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, ui
         return SPI_ADC_OUT_OF_MEMORY;
     }
 
-    uint32_t spi_size = type_size + type_size + adc_buffer_size + 1; // Header + Size + ADC Data + ACK (1 byte)
-
-    data_handle->spi_rx_buffer = (uint8_t*)malloc(spi_size);
-    if (data_handle->spi_rx_buffer == NULL)
-    {
-        free(data_handle);
-        return SPI_ADC_OUT_OF_MEMORY;
-    }
-
-    memset(data_handle->spi_rx_buffer, 0, spi_size);
-    *ptr_rx_buffer = data_handle->spi_rx_buffer;
-
     data_handle->spi_tx_buffer = NULL;
-    data_handle->spi_size = spi_size;
-    data_handle->ack = ack_code;
+    data_handle->spi_rx_buffer = NULL;
+    data_handle->spi_size = type_size + type_size + adc_buffer_size; // Header + Size + ADC Data
     data_handle->handle = hspi;
     data_handle->adc_ref = (size_t)hadc; // Use ADC handle as reference
 
@@ -288,6 +282,7 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, ui
 
 /**
  * @brief Deinitialize SPI ADC data handle and remove it from the list.
+ *        Frees all memory associated with the SPI/ADC handle pair.
  * @param hspi: SPI handle.
  * @param hadc: ADC handle.
  * @retval SPI_ADC_Result: Result of the operation.
@@ -317,13 +312,16 @@ SPI_ADC_Result SPI_ADC_DeInit(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 
 /**
  * @brief Get a buffer containing the SPI frame with ADC data.
+ *        Allocates and fills a TX buffer with header, size, ADC data, and ACK.
+ *        Also allocates an RX buffer if requested.
  * @param hspi: SPI handle.
  * @param hadc: ADC handle.
  * @param ptr_tx_buffer: Pointer to store allocated TX buffer.
- * @param size: Pointer to store size of the buffer.
+ * @param ptr_rx_buffer: Pointer to store allocated RX buffer.
+ * @param ptr_size: Pointer to store size of the buffer.
  * @retval SPI_ADC_Result: Result of the operation.
  */
-SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint32_t *size)
+SPI_ADC_Result SPI_ADC_Get(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint8_t **ptr_rx_buffer, uint32_t *ptr_size)
 {
     if (hspi == NULL || hadc == NULL)
     {
@@ -342,28 +340,27 @@ SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *had
         data_handle->spi_tx_buffer = NULL;
     }
 
+    if (data_handle->spi_rx_buffer != NULL)
+    {
+        free(data_handle->spi_rx_buffer);
+        data_handle->spi_rx_buffer = NULL;
+    }
+
     uint16_t adc_size = 0;
     uint32_t adc_buffer_size = 0;
     uint8_t type_size = 0;
-    if (ADC_GetData(hadc, NULL, &adc_size, &adc_buffer_size, &type_size) != ADC_OK)
+    if (ADC_Get(hadc, NULL, &adc_size, &adc_buffer_size, &type_size) != ADC_OK)
     {
         return SPI_ADC_ERROR;
     }
 
-    if (size != NULL)
+    if (ptr_size != NULL)
     {
-        *size = data_handle->spi_size;
+        *ptr_size = data_handle->spi_size;
     }
 
     if (ptr_tx_buffer != NULL)
     {
-        if (data_handle->spi_rx_buffer == NULL)
-        {
-            return SPI_ADC_ERROR;
-        }
-    
-        memset(data_handle->spi_rx_buffer, 0, data_handle->spi_size);
-    
         data_handle->spi_tx_buffer = (uint8_t*)malloc(data_handle->spi_size);
         if (data_handle->spi_tx_buffer == NULL)
         {
@@ -382,7 +379,7 @@ SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *had
         tar_buf += type_size;
 
         // Set ADC Data
-        if (ADC_GetData(hadc, tar_buf, NULL, NULL, NULL) != ADC_OK)
+        if (ADC_Get(hadc, tar_buf, NULL, NULL, NULL) != ADC_OK)
         {
             free(data_handle->spi_tx_buffer);
             data_handle->spi_tx_buffer = NULL;
@@ -396,33 +393,15 @@ SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *had
         *ptr_tx_buffer = data_handle->spi_tx_buffer;
     }
 
-    return SPI_ADC_OK;
-}
-
-/**
- * @brief Validate the received SPI buffer using the ACK code.
- * @param hspi: SPI handle.
- * @param hadc: ADC handle.
- * @param rx_buffer: Received buffer to validate.
- * @retval SPI_ADC_Result: Result of the operation.
- */
-SPI_ADC_Result SPI_ADC_ValidateBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t *rx_buffer)
-{
-    if (hspi == NULL || rx_buffer == NULL)
+    if (ptr_rx_buffer != NULL)
     {
-        return SPI_ADC_ARGUMENT_OUT_OF_RANGE;
-    }
-
-    SPI_ADC_Data_Handle_t* data_handle = NULL;
-    if (__SPI_ADC_List_Find(hspi, (size_t)hadc, &data_handle) == 0)
-    {
-        return SPI_ADC_ERROR;
-    }
-
-    // ACK Code at last
-    if (rx_buffer[data_handle->spi_size - 1] != data_handle->ack)
-    {
-        return SPI_ADC_ERROR;
+        data_handle->spi_rx_buffer = (uint8_t*)malloc(data_handle->spi_size);
+        if (data_handle->spi_rx_buffer == NULL)
+        {
+            return SPI_ADC_OUT_OF_MEMORY;
+        }
+        memset(data_handle->spi_rx_buffer, 0, data_handle->spi_size);
+        *ptr_rx_buffer = data_handle->spi_rx_buffer;
     }
 
     return SPI_ADC_OK;

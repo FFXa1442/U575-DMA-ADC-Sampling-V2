@@ -33,6 +33,10 @@ extern DMA_HandleTypeDef handle_GPDMA1_Channel10;
 
 extern DMA_HandleTypeDef handle_GPDMA1_Channel9;
 
+extern DMA_HandleTypeDef handle_GPDMA1_Channel8;
+
+extern DMA_HandleTypeDef handle_GPDMA1_Channel7;
+
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
 
@@ -412,6 +416,61 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /* USART1 DMA Init */
+    /* GPDMA1_REQUEST_USART1_TX Init */
+    handle_GPDMA1_Channel8.Instance = GPDMA1_Channel8;
+    handle_GPDMA1_Channel8.Init.Request = GPDMA1_REQUEST_USART1_TX;
+    handle_GPDMA1_Channel8.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    handle_GPDMA1_Channel8.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    handle_GPDMA1_Channel8.Init.SrcInc = DMA_SINC_INCREMENTED;
+    handle_GPDMA1_Channel8.Init.DestInc = DMA_DINC_FIXED;
+    handle_GPDMA1_Channel8.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel8.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel8.Init.Priority = DMA_HIGH_PRIORITY;
+    handle_GPDMA1_Channel8.Init.SrcBurstLength = 1;
+    handle_GPDMA1_Channel8.Init.DestBurstLength = 1;
+    handle_GPDMA1_Channel8.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT1|DMA_DEST_ALLOCATED_PORT0;
+    handle_GPDMA1_Channel8.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    handle_GPDMA1_Channel8.Init.Mode = DMA_NORMAL;
+    if (HAL_DMA_Init(&handle_GPDMA1_Channel8) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(huart, hdmatx, handle_GPDMA1_Channel8);
+
+    if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel8, DMA_CHANNEL_NPRIV) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* GPDMA1_REQUEST_USART1_RX Init */
+    handle_GPDMA1_Channel7.Instance = GPDMA1_Channel7;
+    handle_GPDMA1_Channel7.Init.Request = GPDMA1_REQUEST_USART1_RX;
+    handle_GPDMA1_Channel7.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    handle_GPDMA1_Channel7.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    handle_GPDMA1_Channel7.Init.SrcInc = DMA_SINC_FIXED;
+    handle_GPDMA1_Channel7.Init.DestInc = DMA_DINC_INCREMENTED;
+    handle_GPDMA1_Channel7.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel7.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel7.Init.Priority = DMA_HIGH_PRIORITY;
+    handle_GPDMA1_Channel7.Init.SrcBurstLength = 1;
+    handle_GPDMA1_Channel7.Init.DestBurstLength = 1;
+    handle_GPDMA1_Channel7.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0|DMA_DEST_ALLOCATED_PORT1;
+    handle_GPDMA1_Channel7.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    handle_GPDMA1_Channel7.Init.Mode = DMA_NORMAL;
+    if (HAL_DMA_Init(&handle_GPDMA1_Channel7) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(huart, hdmarx, handle_GPDMA1_Channel7);
+
+    if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel7, DMA_CHANNEL_NPRIV) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
     /* USART1 interrupt Init */
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
@@ -444,6 +503,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     PA10     ------> USART1_RX
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
+
+    /* USART1 DMA DeInit */
+    HAL_DMA_DeInit(huart->hdmatx);
+    HAL_DMA_DeInit(huart->hdmarx);
 
     /* USART1 interrupt DeInit */
     HAL_NVIC_DisableIRQ(USART1_IRQn);

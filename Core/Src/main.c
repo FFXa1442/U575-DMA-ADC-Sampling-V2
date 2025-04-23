@@ -68,6 +68,8 @@ DMA_HandleTypeDef handle_GPDMA1_Channel10;
 DMA_HandleTypeDef handle_GPDMA1_Channel9;
 
 UART_HandleTypeDef huart1;
+DMA_HandleTypeDef handle_GPDMA1_Channel8;
+DMA_HandleTypeDef handle_GPDMA1_Channel7;
 
 /* USER CODE BEGIN PV */
 uint8_t *spi1_adc1_rx_buffer = NULL;
@@ -130,7 +132,7 @@ int main(void)
   Serial_Init(&huart1);
 
   ADC_Init(&hadc1, 5000, ADC_HALF_WORD);
-  SPI_ADC_Init(&hspi1, &hadc1, &spi1_adc1_rx_buffer, 0xAF);
+  SPI_ADC_Init(&hspi1, &hadc1);
 
   /* USER CODE END 2 */
 
@@ -284,6 +286,10 @@ static void MX_GPDMA1_Init(void)
   __HAL_RCC_GPDMA1_CLK_ENABLE();
 
   /* GPDMA1 interrupt Init */
+    HAL_NVIC_SetPriority(GPDMA1_Channel7_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(GPDMA1_Channel7_IRQn);
+    HAL_NVIC_SetPriority(GPDMA1_Channel8_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(GPDMA1_Channel8_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel9_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(GPDMA1_Channel9_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel10_IRQn, 0, 0);
@@ -481,7 +487,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   {
     uint8_t* tx_buffer = NULL;
     uint32_t size = 0;
-    if (SPI_ADC_GetBuffer(&hspi1, &hadc1, &tx_buffer, &size) == SPI_ADC_OK)
+    if (SPI_ADC_Get(&hspi1, &hadc1, &tx_buffer, &spi1_adc1_rx_buffer, &size) == SPI_ADC_OK)
     {
       HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
       HAL_SPI_TransmitReceive_DMA(&hspi1, tx_buffer, spi1_adc1_rx_buffer, size);
@@ -489,21 +495,35 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   }
 }
 
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+uint8_t SPI1_ADC1_ValidateBuffer()
+{
+  if (spi1_adc1_rx_buffer == NULL)
+  {
+    return 0; // Buffer not initialized
+  }
+
+  if (SPI_ADC_Get(&hspi1, &hadc1, NULL, NULL, NULL) != SPI_ADC_OK)
+  {
+    return 0; // Buffer not valid
+  }
+
+  uint8_t res = (spi1_adc1_rx_buffer[0] == 0x68 && spi1_adc1_rx_buffer[1] == 0xAC) ? 1 : 0; // Check header
+  spi1_adc1_rx_buffer = NULL; // Reset buffer pointer
+  return res;
+}
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
   if (hspi->Instance == SPI1)
   {
-    if (SPI_ADC_ValidateBuffer(&hspi1, &hadc1, spi1_adc1_rx_buffer) == SPI_ADC_OK)
+    if (SPI1_ADC1_ValidateBuffer() == 1)
     {
-      HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET); // Set CS high
       spi1_adc1_done = 0x01; // Set done flag
-    }
-    else
-    {
-      // printf("SPI ADC Error\r\n");
     }
   }
 }
+
 
 /* USER CODE END 4 */
 

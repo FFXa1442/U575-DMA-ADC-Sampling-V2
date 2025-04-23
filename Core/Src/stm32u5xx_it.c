@@ -61,6 +61,8 @@ extern DMA_HandleTypeDef handle_GPDMA1_Channel11;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel10;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel9;
 extern SPI_HandleTypeDef hspi1;
+extern DMA_HandleTypeDef handle_GPDMA1_Channel8;
+extern DMA_HandleTypeDef handle_GPDMA1_Channel7;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
@@ -205,6 +207,20 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles GPDMA1 Channel 7 global interrupt.
+  */
+void GPDMA1_Channel7_IRQHandler(void)
+{
+  /* USER CODE BEGIN GPDMA1_Channel7_IRQn 0 */
+
+  /* USER CODE END GPDMA1_Channel7_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel7);
+  /* USER CODE BEGIN GPDMA1_Channel7_IRQn 1 */
+
+  /* USER CODE END GPDMA1_Channel7_IRQn 1 */
+}
+
+/**
   * @brief This function handles SPI1 global interrupt.
   */
 void SPI1_IRQHandler(void)
@@ -230,6 +246,20 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles GPDMA1 Channel 8 global interrupt.
+  */
+void GPDMA1_Channel8_IRQHandler(void)
+{
+  /* USER CODE BEGIN GPDMA1_Channel8_IRQn 0 */
+
+  /* USER CODE END GPDMA1_Channel8_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel8);
+  /* USER CODE BEGIN GPDMA1_Channel8_IRQn 1 */
+
+  /* USER CODE END GPDMA1_Channel8_IRQn 1 */
 }
 
 /**

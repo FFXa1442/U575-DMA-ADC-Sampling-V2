@@ -40,11 +40,9 @@ extern ADC_Result ADC_Init(ADC_HandleTypeDef *hadc, const uint16_t dma_size, con
 
 extern ADC_Result ADC_DeInit(ADC_HandleTypeDef *hadc);
 
-extern ADC_Result ADC_GetData(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *size, uint32_t *data_size, uint8_t *type_size);
+extern ADC_Result ADC_Get(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *size, uint32_t *data_size, uint8_t *type_size);
 
 extern ADC_Result ADC_Start_DMA(ADC_HandleTypeDef *hadc);
-
-extern ADC_Result ADC_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc, uint8_t *dst, uint16_t *size);
 
 #ifdef __cplusplus
 }

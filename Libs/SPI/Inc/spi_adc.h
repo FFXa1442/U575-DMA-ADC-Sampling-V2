@@ -29,13 +29,11 @@ typedef enum
     SPI_ADC_FAILED = 0xFF,
 } SPI_ADC_Result;
 
-extern SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_rx_buffer, const uint8_t ack_code);
+extern SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc);
 
 extern SPI_ADC_Result SPI_ADC_DeInit(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc);
 
-extern SPI_ADC_Result SPI_ADC_GetBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint32_t *size);
-
-extern SPI_ADC_Result SPI_ADC_ValidateBuffer(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t *rx_buffer);
+extern SPI_ADC_Result SPI_ADC_Get(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint8_t **ptr_rx_buffer, uint32_t *ptr_size);
 
 #ifdef __cplusplus
 }
