@@ -72,8 +72,7 @@ DMA_HandleTypeDef handle_GPDMA1_Channel8;
 DMA_HandleTypeDef handle_GPDMA1_Channel7;
 
 /* USER CODE BEGIN PV */
-uint8_t *spi1_adc1_rx_buffer = NULL;
-volatile uint8_t spi1_adc1_done = 0x00; // 0x00: not done, 0x01: done
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,7 +89,7 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void Start_ADC1_Sampling(void);
+
 /* USER CODE END 0 */
 
 /**
@@ -143,14 +142,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-
-    Start_ADC1_Sampling();
-
-    while (!spi1_adc1_done);
-
-    HAL_Delay(10);
-    
   }
   /* USER CODE END 3 */
 }
@@ -457,6 +448,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
@@ -468,6 +460,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SPI1_CS_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : SPI1_EXTI_Pin */
+  GPIO_InitStruct.Pin = SPI1_EXTI_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SPI1_EXTI_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI12_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI12_IRQn);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
@@ -475,55 +477,37 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void Start_ADC1_Sampling(void)
-{
-  spi1_adc1_done = 0x00; // Reset done flag
-  HAL_ADC_Start(&hadc1);
-}
-
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   if (hadc->Instance == ADC1)
   {
     uint8_t* tx_buffer = NULL;
     uint32_t size = 0;
-    if (SPI_ADC_Get(&hspi1, &hadc1, &tx_buffer, &spi1_adc1_rx_buffer, &size) == SPI_ADC_OK)
+    if (SPI_ADC_Get(&hspi1, &hadc1, &tx_buffer, NULL, &size) == SPI_ADC_OK)
     {
       HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-      HAL_SPI_TransmitReceive_DMA(&hspi1, tx_buffer, spi1_adc1_rx_buffer, size);
+      HAL_SPI_Transmit_DMA(&hspi1, tx_buffer, size);
     }
   }
-}
-
-uint8_t SPI1_ADC1_ValidateBuffer()
-{
-  if (spi1_adc1_rx_buffer == NULL)
-  {
-    return 0; // Buffer not initialized
-  }
-
-  if (SPI_ADC_Get(&hspi1, &hadc1, NULL, NULL, NULL) != SPI_ADC_OK)
-  {
-    return 0; // Buffer not valid
-  }
-
-  uint8_t res = (spi1_adc1_rx_buffer[0] == 0x68 && spi1_adc1_rx_buffer[1] == 0xAC) ? 1 : 0; // Check header
-  spi1_adc1_rx_buffer = NULL; // Reset buffer pointer
-  return res;
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
   if (hspi->Instance == SPI1)
   {
-    if (SPI1_ADC1_ValidateBuffer() == 1)
-    {
-      HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET); // Set CS high
-      spi1_adc1_done = 0x01; // Set done flag
-    }
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET); // Set CS high
   }
 }
 
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == SPI1_EXTI_Pin)
+  {
+    // Handle the external interrupt for SPI1
+    // This can be used to trigger ADC sampling or any other action
+    ADC_Start_DMA(&hadc1);
+  }
+}
 
 /* USER CODE END 4 */
 

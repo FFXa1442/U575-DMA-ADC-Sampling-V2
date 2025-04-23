@@ -252,9 +252,9 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
         return SPI_ADC_OUT_OF_MEMORY;
     }
 
-    uint8_t type_size = 0;
+    // uint8_t type_size = 0;
     uint32_t adc_buffer_size = 0;
-    if (ADC_Get(hadc, NULL, NULL, &adc_buffer_size, &type_size) != ADC_OK)
+    if (ADC_Get(hadc, NULL, NULL, &adc_buffer_size, NULL) != ADC_OK)
     {
         return SPI_ADC_ERROR;
     }
@@ -267,7 +267,7 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 
     data_handle->spi_tx_buffer = NULL;
     data_handle->spi_rx_buffer = NULL;
-    data_handle->spi_size = type_size + type_size + adc_buffer_size; // Header + Size + ADC Data
+    data_handle->spi_size = 2 + 2 + adc_buffer_size; // Header + Size + ADC Data
     data_handle->handle = hspi;
     data_handle->adc_ref = (size_t)hadc; // Use ADC handle as reference
 
@@ -348,8 +348,8 @@ SPI_ADC_Result SPI_ADC_Get(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uin
 
     uint16_t adc_size = 0;
     uint32_t adc_buffer_size = 0;
-    uint8_t type_size = 0;
-    if (ADC_Get(hadc, NULL, &adc_size, &adc_buffer_size, &type_size) != ADC_OK)
+    // uint8_t type_size = 0;
+    if (ADC_Get(hadc, NULL, &adc_size, &adc_buffer_size, NULL) != ADC_OK)
     {
         return SPI_ADC_ERROR;
     }
@@ -374,9 +374,9 @@ SPI_ADC_Result SPI_ADC_Get(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uin
         *tar_buf++ = FRAME_HEADER_2; // Header
 
         // Set Size
-        memcpy(tar_buf, &adc_size, type_size);
+        memcpy(tar_buf, &adc_size, 2);
         
-        tar_buf += type_size;
+        tar_buf += 2;
 
         // Set ADC Data
         if (ADC_Get(hadc, tar_buf, NULL, NULL, NULL) != ADC_OK)

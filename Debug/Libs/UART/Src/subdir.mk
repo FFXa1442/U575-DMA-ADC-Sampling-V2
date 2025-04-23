@@ -5,13 +5,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Libs/UART/Src/serial.c 
+../Libs/UART/Src/serial.c \
+../Libs/UART/Src/uart_adc.c 
 
 OBJS += \
-./Libs/UART/Src/serial.o 
+./Libs/UART/Src/serial.o \
+./Libs/UART/Src/uart_adc.o 
 
 C_DEPS += \
-./Libs/UART/Src/serial.d 
+./Libs/UART/Src/serial.d \
+./Libs/UART/Src/uart_adc.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -21,7 +24,7 @@ Libs/UART/Src/%.o Libs/UART/Src/%.su Libs/UART/Src/%.cyclo: ../Libs/UART/Src/%.c
 clean: clean-Libs-2f-UART-2f-Src
 
 clean-Libs-2f-UART-2f-Src:
-	-$(RM) ./Libs/UART/Src/serial.cyclo ./Libs/UART/Src/serial.d ./Libs/UART/Src/serial.o ./Libs/UART/Src/serial.su
+	-$(RM) ./Libs/UART/Src/serial.cyclo ./Libs/UART/Src/serial.d ./Libs/UART/Src/serial.o ./Libs/UART/Src/serial.su ./Libs/UART/Src/uart_adc.cyclo ./Libs/UART/Src/uart_adc.d ./Libs/UART/Src/uart_adc.o ./Libs/UART/Src/uart_adc.su
 
 .PHONY: clean-Libs-2f-UART-2f-Src
 

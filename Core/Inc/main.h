@@ -59,6 +59,9 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SPI1_CS_Pin GPIO_PIN_4
 #define SPI1_CS_GPIO_Port GPIOA
+#define SPI1_EXTI_Pin GPIO_PIN_12
+#define SPI1_EXTI_GPIO_Port GPIOF
+#define SPI1_EXTI_EXTI_IRQn EXTI12_IRQn
 
 /* USER CODE BEGIN Private defines */
 
