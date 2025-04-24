@@ -62,6 +62,8 @@ extern DMA_HandleTypeDef handle_GPDMA1_Channel10;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel9;
 extern SPI_HandleTypeDef hspi1;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel8;
+extern DMA_NodeTypeDef Node_GPDMA1_Channel7;
+extern DMA_QListTypeDef List_GPDMA1_Channel7;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel7;
 extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
@@ -214,7 +216,7 @@ void EXTI12_IRQHandler(void)
   /* USER CODE BEGIN EXTI12_IRQn 0 */
 
   /* USER CODE END EXTI12_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(SPI1_EXTI_Pin);
+  HAL_GPIO_EXTI_IRQHandler(SPI1_FF_Pin);
   /* USER CODE BEGIN EXTI12_IRQn 1 */
 
   /* USER CODE END EXTI12_IRQn 1 */

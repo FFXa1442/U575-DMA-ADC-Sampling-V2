@@ -21,9 +21,6 @@ typedef struct {
     uint8_t* uart_tx_buffer; // Allocate After
     uint32_t uart_tx_size; // Header + Size + ADC Data + Footer
 
-    uint8_t* uart_rx_buffer; // Allocate After
-    uint32_t uart_rx_size;
-
     UART_HandleTypeDef* handle;
     size_t adc_ref;
 
@@ -85,11 +82,6 @@ void __UART_ADC_List_DeInit(void)
         {
             free(current->data_handle->uart_tx_buffer);
             current->data_handle->uart_tx_buffer = NULL;
-        }
-        if (current->data_handle->uart_rx_buffer != NULL)
-        {
-            free(current->data_handle->uart_rx_buffer);
-            current->data_handle->uart_rx_buffer = NULL;
         }
         if (current->data_handle != NULL)
         {
@@ -218,7 +210,7 @@ uint8_t __UART_ADC_List_Find(UART_HandleTypeDef *huart, size_t ref, UART_ADC_Dat
  * @param hadc: ADC handle.
  * @retval UART_ADC_Result: Result of the operation.
  */
-UART_ADC_Result UART_ADC_Init(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc, const uint32_t rx_buffer)
+UART_ADC_Result UART_ADC_Init(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc)
 {
     if (huart == NULL || hadc == NULL)
     {
@@ -244,9 +236,7 @@ UART_ADC_Result UART_ADC_Init(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc
     }
 
     data_handle->uart_tx_buffer = NULL;
-    data_handle->uart_rx_buffer = NULL;
     data_handle->uart_tx_size = 2 + 2 + adc_buffer_size + 2; // Header + Size + ADC Data + Footer
-    data_handle->uart_rx_size = rx_buffer; // Set RX buffer size
     data_handle->handle = huart;
     data_handle->adc_ref = (size_t)hadc; // Use ADC handle as reference
 
@@ -279,18 +269,6 @@ UART_ADC_Result UART_ADC_DeInit(UART_HandleTypeDef *huart, ADC_HandleTypeDef *ha
         return UART_ADC_ERROR;
     }
 
-    if (data_handle->uart_tx_buffer != NULL)
-    {
-        free(data_handle->uart_tx_buffer);
-        data_handle->uart_tx_buffer = NULL;
-    }
-
-    if (data_handle->uart_rx_buffer != NULL)
-    {
-        free(data_handle->uart_rx_buffer);
-        data_handle->uart_rx_buffer = NULL;
-    }
-
     if (__UART_ADC_List_Remove(data_handle) == 0)
     {
         return UART_ADC_ERROR;
@@ -302,7 +280,7 @@ UART_ADC_Result UART_ADC_DeInit(UART_HandleTypeDef *huart, ADC_HandleTypeDef *ha
 }
 
 
-UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint32_t *ptr_tx_size, uint8_t **ptr_rx_buffer, uint32_t *ptr_rx_size)
+UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint32_t *ptr_tx_size)
 {
     if (huart == NULL || hadc == NULL)
     {
@@ -321,12 +299,6 @@ UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc,
         data_handle->uart_tx_buffer = NULL;
     }
     
-    if (data_handle->uart_rx_buffer != NULL)
-    {
-        free(data_handle->uart_rx_buffer);
-        data_handle->uart_rx_buffer = NULL;
-    }
-
     uint16_t adc_size = 0;
     uint32_t adc_buffer_size = 0;
     // uint8_t type_size = 0;
@@ -338,11 +310,6 @@ UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc,
     if (ptr_tx_size != NULL)
     {
         *ptr_tx_size = data_handle->uart_tx_size;
-    }
-
-    if (ptr_rx_size != NULL)
-    {
-        *ptr_rx_size = data_handle->uart_rx_size;
     }
 
     if (ptr_tx_buffer != NULL)
@@ -377,18 +344,6 @@ UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc,
         *tar_buf++ = FRAME_FOOTER_2; // Footer
 
         *ptr_tx_buffer = data_handle->uart_tx_buffer;
-    }
-
-    if (ptr_rx_buffer != NULL)
-    {
-        data_handle->uart_rx_buffer = (uint8_t*)malloc(data_handle->uart_rx_size);
-        if (data_handle->uart_rx_buffer == NULL)
-        {
-            return UART_ADC_OUT_OF_MEMORY;
-        }
-
-        memset(data_handle->uart_rx_buffer, 0, data_handle->uart_rx_size); // Initialize RX buffer to zero
-        *ptr_rx_buffer = data_handle->uart_rx_buffer;
     }
 
     return UART_ADC_OK;

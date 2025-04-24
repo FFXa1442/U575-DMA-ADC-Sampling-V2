@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/XQuan/STM32CubeIDE/workspace_1.18.0/U575-DMA-ADC-Sampling-V2/Libs/SPI/Src",
-      "program": "c:/Users/XQuan/STM32CubeIDE/workspace_1.18.0/U575-DMA-ADC-Sampling-V2/Libs/SPI/Src/build/Debug/outDebug",
+      "cwd": "c:/Users/XQuan/STM32CubeIDE/workspace_1.18.0/U575-DMA-ADC-Sampling-V2/Core/Src",
+      "program": "c:/Users/XQuan/STM32CubeIDE/workspace_1.18.0/U575-DMA-ADC-Sampling-V2/Core/Src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

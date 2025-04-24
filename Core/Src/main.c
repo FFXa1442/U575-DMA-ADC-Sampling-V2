@@ -39,7 +39,13 @@
 /* USER CODE BEGIN Includes */
 #include "serial.h"
 #include "sampling.h"
+
+#if defined(SPI_ADC_MODE)
 #include "spi_adc.h"
+#elif defined(UART_ADC_MODE)
+#include "uart_adc.h"
+#endif
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,7 +55,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#if defined(UART_ADC_MODE)
+#define UART1_BUFFER_SIZE 20
+#endif
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,10 +77,15 @@ DMA_HandleTypeDef handle_GPDMA1_Channel9;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef handle_GPDMA1_Channel8;
+DMA_NodeTypeDef Node_GPDMA1_Channel7;
+DMA_QListTypeDef List_GPDMA1_Channel7;
 DMA_HandleTypeDef handle_GPDMA1_Channel7;
 
 /* USER CODE BEGIN PV */
 
+#if defined(UART_ADC_MODE)
+uint8_t uart1_buffer[UART1_BUFFER_SIZE];
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,11 +141,25 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+#if defined(UART_ADC_MODE)
   Serial_Init(&huart1);
+#endif
 
   ADC_Init(&hadc1, 5000, ADC_HALF_WORD);
+
+
+
+#if defined(SPI_ADC_MODE)
+
   SPI_ADC_Init(&hspi1, &hadc1);
 
+#elif defined(UART_ADC_MODE)
+
+  UART_ADC_Init(&huart1, &hadc1);
+  HAL_UART_Receive_DMA(&huart1, uart1_buffer, UART1_BUFFER_SIZE);
+
+#endif
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -460,11 +487,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SPI1_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SPI1_EXTI_Pin */
-  GPIO_InitStruct.Pin = SPI1_EXTI_Pin;
+  /*Configure GPIO pin : SPI1_FF_Pin */
+  GPIO_InitStruct.Pin = SPI1_FF_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SPI1_EXTI_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SPI1_FF_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI12_IRQn, 0, 0);
@@ -477,36 +504,95 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   if (hadc->Instance == ADC1)
   {
     uint8_t* tx_buffer = NULL;
     uint32_t size = 0;
+
+#if defined(SPI_ADC_MODE)
+
     if (SPI_ADC_Get(&hspi1, &hadc1, &tx_buffer, NULL, &size) == SPI_ADC_OK)
     {
       HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
       HAL_SPI_Transmit_DMA(&hspi1, tx_buffer, size);
     }
+
+#elif defined(UART_ADC_MODE)
+
+    if (UART_ADC_Get(&huart1, &hadc1, &tx_buffer, &size) == UART_ADC_OK)
+    {
+      HAL_UART_Transmit_DMA(&huart1, tx_buffer, size);
+    }
+
+#else
+
+    UNUSED(hadc);
+    UNUSED(tx_buffer);
+    UNUSED(size);
+
+#endif
   }
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
+#if defined(SPI_ADC_MODE)
+
   if (hspi->Instance == SPI1)
   {
     HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET); // Set CS high
   }
+
+#else
+
+  UNUSED(hspi);
+
+#endif
 }
 
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == SPI1_EXTI_Pin)
+#if defined(SPI_ADC_MODE)
+
+  if (GPIO_Pin == SPI1_FF_Pin)
   {
     // Handle the external interrupt for SPI1
     // This can be used to trigger ADC sampling or any other action
     ADC_Start_DMA(&hadc1);
   }
+
+#else
+  UNUSED(GPIO_Pin);
+#endif
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+#if defined(UART_ADC_MODE)
+  if (huart->Instance == USART1)
+  {
+    ADC_Start_DMA(&hadc1);
+  }
+#else
+    UNUSED(huart);
+#endif
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+#if defined(UART_ADC_MODE)
+
+#else
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(huart);
+
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_UART_TxCpltCallback can be implemented in the user file.
+   */
+#endif
 }
 
 /* USER CODE END 4 */

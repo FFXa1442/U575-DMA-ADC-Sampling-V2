@@ -29,6 +29,12 @@ typedef enum
     UART_ADC_FAILED = 0xFF,
 } UART_ADC_Result;
 
+UART_ADC_Result UART_ADC_Init(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc);
+
+UART_ADC_Result UART_ADC_DeInit(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc);
+
+UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint32_t *ptr_tx_size);
+
 #ifdef __cplusplus
 }
 #endif
