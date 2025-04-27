@@ -59,13 +59,13 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SPI1_CS_Pin GPIO_PIN_4
 #define SPI1_CS_GPIO_Port GPIOA
-#define SPI1_FF_Pin GPIO_PIN_12
-#define SPI1_FF_GPIO_Port GPIOF
-#define SPI1_FF_EXTI_IRQn EXTI12_IRQn
+#define SPI1_FB_Pin GPIO_PIN_12
+#define SPI1_FB_GPIO_Port GPIOF
+#define SPI1_FB_EXTI_IRQn EXTI12_IRQn
 
 /* USER CODE BEGIN Private defines */
-// #define UART_ADC_MODE
-// #define SPI_ADC_MODE
+#define UART_ADC_MODE
+#define SPI_ADC_MODE
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

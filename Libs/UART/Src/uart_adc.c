@@ -45,8 +45,8 @@ UART_ADC_List_t __UART_ADC_List = {0};
 uint8_t __UART_ADC_List_Inited = 0;
 
 /**
- * @brief Initialize the UART ADC list if not already initialized.
- * @retval 1 if initialized, 0 if already initialized.
+ * @brief Initialize the UART ADC data node linked list (only initialize once).
+ * @retval 1 means initialized, 0 means already initialized.
  */
 uint8_t __UART_ADC_List_Init(void)
 {
@@ -63,8 +63,8 @@ uint8_t __UART_ADC_List_Init(void)
 }
 
 /**
- * @brief Deinitialize the UART ADC list and free all nodes.
- * @retval None
+ * @brief Release the UART ADC linked list and all related memory.
+ * @note Will release all nodes and their data.
  */
 void __UART_ADC_List_DeInit(void)
 {
@@ -98,9 +98,9 @@ void __UART_ADC_List_DeInit(void)
 }
 
 /**
- * @brief Add a UART_ADC_Data_Handle_t to the list.
- * @param data_handle: Pointer to the data handle to add.
- * @retval 1 if added successfully, 0 otherwise.
+ * @brief Add a UART_ADC_Data_Handle_t node to the linked list.
+ * @param data_handle Pointer to the data to be added.
+ * @retval 1 means added successfully, 0 means failed.
  */
 uint8_t __UART_ADC_List_Add(UART_ADC_Data_Handle_t* data_handle)
 {
@@ -133,9 +133,9 @@ uint8_t __UART_ADC_List_Add(UART_ADC_Data_Handle_t* data_handle)
 }
 
 /**
- * @brief Remove a UART_ADC_Data_Handle_t from the list and free its memory.
- * @param data_handle: Pointer to the data handle to remove.
- * @retval 1 if removed successfully, 0 otherwise.
+ * @brief Remove the specified UART_ADC_Data_Handle_t from the list and free its memory.
+ * @param data_handle Pointer to the data to be removed.
+ * @retval 1 means removed successfully, 0 means failed.
  */
 uint8_t __UART_ADC_List_Remove(UART_ADC_Data_Handle_t* data_handle)
 {
@@ -170,11 +170,11 @@ uint8_t __UART_ADC_List_Remove(UART_ADC_Data_Handle_t* data_handle)
 }
 
 /**
- * @brief Find a UART_ADC_Data_Handle_t in the list by UART handle and ADC reference.
- * @param huart: UART handle.
- * @param ref: ADC reference (usually the ADC handle cast to size_t).
- * @param return_handle: Pointer to store the found data handle.
- * @retval 1 if found, 0 otherwise.
+ * @brief Find the corresponding UART_ADC_Data_Handle_t according to UART handle and ADC reference.
+ * @param huart UART handle.
+ * @param ref ADC reference (usually ADC handle cast to size_t).
+ * @param return_handle Pointer to return the found data handle.
+ * @retval 1 means found, 0 means not found.
  */
 uint8_t __UART_ADC_List_Find(UART_HandleTypeDef *huart, size_t ref, UART_ADC_Data_Handle_t** return_handle)
 {
@@ -204,11 +204,11 @@ uint8_t __UART_ADC_List_Find(UART_HandleTypeDef *huart, size_t ref, UART_ADC_Dat
 #endif
 
 /**
- * @brief Initialize UART ADC data handle and add it to the list.
- *        Allocates and initializes a data handle for the given UART and ADC handles.
- * @param huart: UART handle.
- * @param hadc: ADC handle.
- * @retval UART_ADC_Result: Result of the operation.
+ * @brief Initialize UART ADC data structure and add to the list.
+ *        Allocates and initializes the data structure according to UART/ADC handle pairing.
+ * @param huart UART handle.
+ * @param hadc ADC handle.
+ * @retval UART_ADC_Result Operation result.
  */
 UART_ADC_Result UART_ADC_Init(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc)
 {
@@ -250,11 +250,11 @@ UART_ADC_Result UART_ADC_Init(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc
 }
 
 /**
- * @brief Deinitialize a UART ADC data handle and free resources.
- *        Frees all memory associated with the UART ADC handle.
- * @param huart: UART handle.
- * @param hadc: ADC handle.
- * @retval UART_ADC_Result: Result of the operation.
+ * @brief Release UART ADC data structure and remove from the list.
+ *        Frees all memory related to the UART/ADC handle pairing.
+ * @param huart UART handle.
+ * @param hadc ADC handle.
+ * @retval UART_ADC_Result Operation result.
  */
 UART_ADC_Result UART_ADC_DeInit(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc)
 {
@@ -279,7 +279,15 @@ UART_ADC_Result UART_ADC_DeInit(UART_HandleTypeDef *huart, ADC_HandleTypeDef *ha
     return UART_ADC_OK;
 }
 
-
+/**
+ * @brief Get the UART transmission buffer containing ADC data.
+ *        Allocates and fills the UART transmission frame (including header, data length, ADC data, footer).
+ * @param huart UART handle.
+ * @param hadc ADC handle.
+ * @param ptr_tx_buffer Pointer to return the allocated TX buffer.
+ * @param ptr_tx_size Pointer to return the buffer size.
+ * @retval UART_ADC_Result Operation result.
+ */
 UART_ADC_Result UART_ADC_Get(UART_HandleTypeDef *huart, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint32_t *ptr_tx_size)
 {
     if (huart == NULL || hadc == NULL)

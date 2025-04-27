@@ -49,8 +49,8 @@ SPI_ADC_List_t __SPI_ADC_List = {0};
 uint8_t __SPI_ADC_List_Inited = 0;
 
 /**
- * @brief Initialize the SPI ADC list if not already initialized.
- * @retval 1 if initialized, 0 if already initialized.
+ * @brief Initialize the SPI ADC data node linked list (only initialize once).
+ * @retval 1 means initialized, 0 means already initialized.
  */
 uint8_t __SPI_ADC_List_Init(void)
 {
@@ -67,8 +67,8 @@ uint8_t __SPI_ADC_List_Init(void)
 }
 
 /**
- * @brief Deinitialize the SPI ADC list and free all allocated memory.
- *        This function releases all memory used by the list and its data handles.
+ * @brief Release the SPI ADC linked list and all related memory.
+ * @note Will release all nodes and their data.
  */
 void __SPI_ADC_List_DeInit(void)
 {
@@ -108,9 +108,9 @@ void __SPI_ADC_List_DeInit(void)
 }
 
 /**
- * @brief Add a new SPI_ADC_Data_Handle_t to the list.
- * @param data_handle: Pointer to the data handle to add.
- * @retval 1 if added successfully, 0 otherwise.
+ * @brief Add a SPI_ADC_Data_Handle_t node to the linked list.
+ * @param data_handle Pointer to the data to be added.
+ * @retval 1 means added successfully, 0 means failed.
  */
 uint8_t __SPI_ADC_List_Add(SPI_ADC_Data_Handle_t* data_handle)
 {
@@ -143,9 +143,9 @@ uint8_t __SPI_ADC_List_Add(SPI_ADC_Data_Handle_t* data_handle)
 }
 
 /**
- * @brief Remove a SPI_ADC_Data_Handle_t from the list and free its memory.
- * @param data_handle: Pointer to the data handle to remove.
- * @retval 1 if removed successfully, 0 otherwise.
+ * @brief Remove the specified SPI_ADC_Data_Handle_t from the list and free its memory.
+ * @param data_handle Pointer to the data to be removed.
+ * @retval 1 means removed successfully, 0 means failed.
  */
 uint8_t __SPI_ADC_List_Remove(SPI_ADC_Data_Handle_t* data_handle)
 {
@@ -199,11 +199,11 @@ uint8_t __SPI_ADC_List_Remove(SPI_ADC_Data_Handle_t* data_handle)
 }
 
 /**
- * @brief Find a SPI_ADC_Data_Handle_t in the list by SPI handle and ADC reference.
- * @param hspi: SPI handle.
- * @param ref: ADC reference (usually the ADC handle cast to size_t).
- * @param return_handle: Pointer to store the found data handle.
- * @retval 1 if found, 0 otherwise.
+ * @brief Find the corresponding SPI_ADC_Data_Handle_t according to SPI handle and ADC reference.
+ * @param hspi SPI handle.
+ * @param ref ADC reference (usually ADC handle cast to size_t).
+ * @param return_handle Pointer to return the found data handle.
+ * @retval 1 means found, 0 means not found.
  */
 uint8_t __SPI_ADC_List_Find(SPI_HandleTypeDef *hspi, size_t ref, SPI_ADC_Data_Handle_t** return_handle)
 {
@@ -234,11 +234,11 @@ uint8_t __SPI_ADC_List_Find(SPI_HandleTypeDef *hspi, size_t ref, SPI_ADC_Data_Ha
 #endif
 
 /**
- * @brief Initialize SPI ADC data handle and add it to the list.
- *        Allocates and initializes a data handle for the given SPI and ADC handles.
- * @param hspi: SPI handle.
- * @param hadc: ADC handle.
- * @retval SPI_ADC_Result: Result of the operation.
+ * @brief Initialize SPI ADC data structure and add to the list.
+ *        Allocates and initializes the data structure according to SPI/ADC handle pairing.
+ * @param hspi SPI handle.
+ * @param hadc ADC handle.
+ * @retval SPI_ADC_Result Operation result.
  */
 SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 {
@@ -281,11 +281,11 @@ SPI_ADC_Result SPI_ADC_Init(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 }
 
 /**
- * @brief Deinitialize SPI ADC data handle and remove it from the list.
- *        Frees all memory associated with the SPI/ADC handle pair.
- * @param hspi: SPI handle.
- * @param hadc: ADC handle.
- * @retval SPI_ADC_Result: Result of the operation.
+ * @brief Release SPI ADC data structure and remove from the list.
+ *        Frees all memory related to the SPI/ADC handle pairing.
+ * @param hspi SPI handle.
+ * @param hadc ADC handle.
+ * @retval SPI_ADC_Result Operation result.
  */
 SPI_ADC_Result SPI_ADC_DeInit(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 {
@@ -311,15 +311,15 @@ SPI_ADC_Result SPI_ADC_DeInit(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc)
 }
 
 /**
- * @brief Get a buffer containing the SPI frame with ADC data.
- *        Allocates and fills a TX buffer with header, size, ADC data, and ACK.
- *        Also allocates an RX buffer if requested.
- * @param hspi: SPI handle.
- * @param hadc: ADC handle.
- * @param ptr_tx_buffer: Pointer to store allocated TX buffer.
- * @param ptr_rx_buffer: Pointer to store allocated RX buffer.
- * @param ptr_size: Pointer to store size of the buffer.
- * @retval SPI_ADC_Result: Result of the operation.
+ * @brief Get the SPI transmission buffer containing ADC data.
+ *        Allocates and fills the SPI transmission frame (including header, data length, ADC data, ACK).
+ *        Allocates RX buffer if needed.
+ * @param hspi SPI handle.
+ * @param hadc ADC handle.
+ * @param ptr_tx_buffer Pointer to return the allocated TX buffer.
+ * @param ptr_rx_buffer Pointer to return the allocated RX buffer.
+ * @param ptr_size Pointer to return the buffer size.
+ * @retval SPI_ADC_Result Operation result.
  */
 SPI_ADC_Result SPI_ADC_Get(SPI_HandleTypeDef *hspi, ADC_HandleTypeDef *hadc, uint8_t **ptr_tx_buffer, uint8_t **ptr_rx_buffer, uint32_t *ptr_size)
 {

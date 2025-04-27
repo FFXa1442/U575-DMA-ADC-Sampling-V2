@@ -31,3 +31,4 @@
 "./Libs/SPI/Src/spi_adc.o"
 "./Libs/UART/Src/serial.o"
 "./Libs/UART/Src/uart_adc.o"
+"./User/Src/processing.o"

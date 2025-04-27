@@ -176,7 +176,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     }
 
     handle_GPDMA1_Channel11.Instance = GPDMA1_Channel11;
-    handle_GPDMA1_Channel11.InitLinkedList.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
+    handle_GPDMA1_Channel11.InitLinkedList.Priority = DMA_LOW_PRIORITY_HIGH_WEIGHT;
     handle_GPDMA1_Channel11.InitLinkedList.LinkStepMode = DMA_LSM_FULL_EXECUTION;
     handle_GPDMA1_Channel11.InitLinkedList.LinkAllocatedPort = DMA_LINK_ALLOCATED_PORT0;
     handle_GPDMA1_Channel11.InitLinkedList.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
@@ -482,7 +482,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     }
 
     handle_GPDMA1_Channel7.Instance = GPDMA1_Channel7;
-    handle_GPDMA1_Channel7.InitLinkedList.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
+    handle_GPDMA1_Channel7.InitLinkedList.Priority = DMA_HIGH_PRIORITY;
     handle_GPDMA1_Channel7.InitLinkedList.LinkStepMode = DMA_LSM_FULL_EXECUTION;
     handle_GPDMA1_Channel7.InitLinkedList.LinkAllocatedPort = DMA_LINK_ALLOCATED_PORT0;
     handle_GPDMA1_Channel7.InitLinkedList.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;

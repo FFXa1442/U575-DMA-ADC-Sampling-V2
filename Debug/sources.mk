@@ -28,4 +28,5 @@ Drivers/STM32U5xx_HAL_Driver/Src \
 Libs/ADC/Src \
 Libs/SPI/Src \
 Libs/UART/Src \
+User/Src \
 

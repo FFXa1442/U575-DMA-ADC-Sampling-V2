@@ -313,12 +313,12 @@ ADC_Result ADC_Get(ADC_HandleTypeDef *hadc, uint8_t *buffer, uint16_t *size, uin
 
     if (size != NULL)
     {
-        *size = data_handle->adc_buffer_size;
+        *size = data_handle->adc_size;
     }
 
     if (data_size != NULL)
     {
-        *data_size = data_handle->adc_size;
+        *data_size = data_handle->adc_buffer_size;
     }
 
     if (type_size != NULL)

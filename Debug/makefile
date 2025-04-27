@@ -9,6 +9,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include User/Src/subdir.mk
 -include Libs/UART/Src/subdir.mk
 -include Libs/SPI/Src/subdir.mk
 -include Libs/ADC/Src/subdir.mk

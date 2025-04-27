@@ -22,6 +22,7 @@
  *    SPI1 MISO : PA6
  *    SPI1 SCK  : PA5
  *    SPI1 CS   : PA4 <- for ESP32 or Raspberry Pi 4B / 5
+ *    SPI1 FB	: PF12 <- from ESP32 or Raspberry Pi 4B / 5
  * 
  * ADC GPIO
  *    ADC1 VIN+ : PA2
@@ -38,14 +39,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "serial.h"
-#include "sampling.h"
-
-#if defined(SPI_ADC_MODE)
-#include "spi_adc.h"
-#elif defined(UART_ADC_MODE)
-#include "uart_adc.h"
-#endif
-
+#include "processing.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,9 +49,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#if defined(UART_ADC_MODE)
-#define UART1_BUFFER_SIZE 20
-#endif
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -82,10 +74,7 @@ DMA_QListTypeDef List_GPDMA1_Channel7;
 DMA_HandleTypeDef handle_GPDMA1_Channel7;
 
 /* USER CODE BEGIN PV */
-
-#if defined(UART_ADC_MODE)
-uint8_t uart1_buffer[UART1_BUFFER_SIZE];
-#endif
+Processing_Handle_t hproc_user;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -141,25 +130,16 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-#if defined(UART_ADC_MODE)
-  Serial_Init(&huart1);
-#endif
+  hproc_user.huart = &huart1;
+  hproc_user.hadc = &hadc1;
+  hproc_user.hspi = &hspi1;
+  hproc_user.SPI_CS_GPIOx = SPI1_CS_GPIO_Port;
+  hproc_user.SPI_CS_Pin = SPI1_CS_Pin;
+  hproc_user.SPI_FB_GPIOx = SPI1_FB_GPIO_Port;
+  hproc_user.SPI_FB_Pin = SPI1_FB_Pin;
 
-  ADC_Init(&hadc1, 5000, ADC_HALF_WORD);
+  Processing_Init(&hproc_user);
 
-
-
-#if defined(SPI_ADC_MODE)
-
-  SPI_ADC_Init(&hspi1, &hadc1);
-
-#elif defined(UART_ADC_MODE)
-
-  UART_ADC_Init(&huart1, &hadc1);
-  HAL_UART_Receive_DMA(&huart1, uart1_buffer, UART1_BUFFER_SIZE);
-
-#endif
-  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -429,7 +409,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 921600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -487,11 +467,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SPI1_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SPI1_FF_Pin */
-  GPIO_InitStruct.Pin = SPI1_FF_Pin;
+  /*Configure GPIO pin : SPI1_FB_Pin */
+  GPIO_InitStruct.Pin = SPI1_FB_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SPI1_FF_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SPI1_FB_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI12_IRQn, 0, 0);
@@ -504,95 +484,56 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-  if (hadc->Instance == ADC1)
+  Processing_Callback_Handle_t callback_handle;
+  callback_handle.hadc = hadc;
+  if (Processing_ADC_ConvCpltCallback(&hproc_user, &callback_handle) == PROCESSING_OK)
   {
-    uint8_t* tx_buffer = NULL;
-    uint32_t size = 0;
-
-#if defined(SPI_ADC_MODE)
-
-    if (SPI_ADC_Get(&hspi1, &hadc1, &tx_buffer, NULL, &size) == SPI_ADC_OK)
-    {
-      HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-      HAL_SPI_Transmit_DMA(&hspi1, tx_buffer, size);
-    }
-
-#elif defined(UART_ADC_MODE)
-
-    if (UART_ADC_Get(&huart1, &hadc1, &tx_buffer, &size) == UART_ADC_OK)
-    {
-      HAL_UART_Transmit_DMA(&huart1, tx_buffer, size);
-    }
-
-#else
-
-    UNUSED(hadc);
-    UNUSED(tx_buffer);
-    UNUSED(size);
-
-#endif
+    // Nothing to do here, the callback is handled in Processing_ADC_ConvCpltCallback
   }
 }
 
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
 {
-#if defined(SPI_ADC_MODE)
-
-  if (hspi->Instance == SPI1)
+  Processing_Callback_Handle_t callback_handle;
+  callback_handle.huart = huart;
+  if (Processing_TxCpltCallback(&hproc_user, &callback_handle) == PROCESSING_OK)
   {
-    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET); // Set CS high
+    // Nothing to do here, the callback is handled in Processing_TxCpltCallback
   }
+}
 
-#else
+//volatile uint32_t fb_count = 0;
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
+{
+  Processing_Callback_Handle_t callback_handle;
+  callback_handle.huart = huart;
+  if (Processing_FeedBack_Callback(&hproc_user, &callback_handle) == PROCESSING_OK)
+  {
+//    fb_count++;
+    // Nothing to do here, the callback is handled in Processing_TxCpltCallback
+  }
+}
 
-  UNUSED(hspi);
-
-#endif
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi)
+{
+  Processing_Callback_Handle_t callback_handle;
+  callback_handle.hspi = hspi;
+  if (Processing_TxCpltCallback(&hproc_user, &callback_handle) == PROCESSING_OK)
+  {
+    // Nothing to do here, the callback is handled in Processing_TxCpltCallback
+  }
 }
 
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
-#if defined(SPI_ADC_MODE)
-
-  if (GPIO_Pin == SPI1_FF_Pin)
+  Processing_Callback_Handle_t callback_handle;
+  callback_handle.SPI_FB_Pin = GPIO_Pin;
+  if (Processing_FeedBack_Callback(&hproc_user, &callback_handle) == PROCESSING_OK)
   {
-    // Handle the external interrupt for SPI1
-    // This can be used to trigger ADC sampling or any other action
-    ADC_Start_DMA(&hadc1);
+    // Nothing to do here, the callback is handled in Processing_FeedBack_Callback
   }
-
-#else
-  UNUSED(GPIO_Pin);
-#endif
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-#if defined(UART_ADC_MODE)
-  if (huart->Instance == USART1)
-  {
-    ADC_Start_DMA(&hadc1);
-  }
-#else
-    UNUSED(huart);
-#endif
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-#if defined(UART_ADC_MODE)
-
-#else
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-
-  /* NOTE : This function should not be modified, when the callback is needed,
-            the HAL_UART_TxCpltCallback can be implemented in the user file.
-   */
-#endif
 }
 
 /* USER CODE END 4 */
